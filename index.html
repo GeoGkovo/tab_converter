@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tab Converter</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 1000px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 28px;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.3s;
+        }
+
+        .modal.show {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 90%;
+            position: relative;
+            animation: slideDown 0.3s;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 24px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .close-button {
+            background: none;
+            border: none;
+            font-size: 28px;
+            color: #999;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.2s;
+        }
+
+        .close-button:hover {
+            color: #333;
+        }
+
+        .modal-body {
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .modal-footer {
+            text-align: right;
+        }
+
+        .modal-button {
+            padding: 10px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .modal-button:hover {
+            transform: translateY(-2px);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        /* Tab Navigation */
+        .tab-navigation {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .tab-button {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            color: #666;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+            margin-bottom: -2px;
+        }
+
+        .tab-button:hover {
+            color: #667eea;
+        }
+
+        .tab-button.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .construction-notice {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .construction-notice h3 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+
+        .construction-notice p {
+            color: #856404;
+        }
+
+        .tuning-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 20px;
+        }
+
+        .tuning-section {
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+        }
+
+        .tuning-section h3 {
+            color: #555;
+            font-size: 16px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        select,
+        input[type="text"],
+        input[type="number"],
+        input[type="file"],
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+            background: white;
+            font-family: 'Courier New', monospace;
+        }
+
+        select:focus,
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        input[type="file"] {
+            padding: 10px;
+            cursor: pointer;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        textarea {
+            min-height: 200px;
+            resize: vertical;
+            line-height: 1.5;
+        }
+
+        .custom-tuning {
+            display: none;
+        }
+
+        .custom-tuning.show {
+            display: block;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .button-group button {
+            margin-top: 0;
+        }
+
+        .secondary-button {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        }
+
+        .secondary-button:hover {
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+        }
+
+        .content-container {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            display: none;
+        }
+
+        .content-container.show {
+            display: block;
+        }
+
+        .content-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .content-text {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: 'Courier New', monospace;
+            color: #555;
+            font-size: 13px;
+            line-height: 1.6;
+            max-height: 300px;
+            overflow-y: auto;
+            background: white;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+
+        .error {
+            color: #dc3545;
+        }
+
+        .success {
+            color: #28a745;
+        }
+
+        .loading {
+            text-align: center;
+            color: #667eea;
+            font-style: italic;
+        }
+
+        @media (max-width: 768px) {
+            .tuning-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .tab-navigation {
+                flex-wrap: wrap;
+            }
+
+            .tab-button {
+                flex: 1;
+                min-width: 120px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Construction Modal -->
+    <div id="constructionModal" class="modal show">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">🚧 Under Construction</div>
+                <button class="close-button" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p><strong>This application is currently under development and has limited functionality.</strong></p>
+                <p style="margin-top: 10px;">Some features may not work as expected. Thank you for your patience!</p>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-button" onclick="closeModal()">Got it!</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h1>🎸 Tab Converter</h1>
+        
+        <!-- Tab Navigation -->
+        <div class="tab-navigation">
+            <button class="tab-button active" onclick="switchTab('converter')">Converter</button>
+            <button class="tab-button" onclick="switchTab('howto')">How to Use</button>
+            <button class="tab-button" onclick="switchTab('about')">About</button>
+        </div>
+
+        <!-- Converter Tab -->
+        <div id="converterTab" class="tab-content active">
+            <form id="converterForm">
+                <div class="tuning-grid">
+                    <!-- Input Section -->
+                    <div class="tuning-section">
+                        <h3>📥 Input Instrument</h3>
+                        
+                        <div class="form-group">
+                            <label for="inputPreset">Preset:</label>
+                            <select id="inputPreset" name="inputPreset">
+                                <option value="custom">Custom</option>
+                                <option value="E2,A2,D3,G3,B3,E4" selected>Guitar - Standard (E2,A2,D3,G3,B3,E4)</option>
+                                <option value="D2,A2,D3,G3,B3,E4">Guitar - Drop D (D2,A2,D3,G3,B3,E4)</option>
+                                <option value="C2,G2,C3,F3,A3,D4">Guitar - Drop C (C2,G2,C3,F3,A3,D4)</option>
+                                <option value="D2,A2,D3,G3,B3,D4">Guitar - Open D (D2,A2,D3,G3,B3,D4)</option>
+                                <option value="D2,A2,D3,F#3,A3,D4">Guitar - Open D Minor (D2,A2,D3,F#3,A3,D4)</option>
+                                <option value="E2,A2,E3,A3,C#4,E4">Guitar - Open A (E2,A2,E3,A3,C#4,E4)</option>
+                                <option value="C2,G2,C3,G3,C4,E4">Guitar - Open C (C2,G2,C3,G3,C4,E4)</option>
+                                <option value="D2,G2,D3,G3,B3,D4">Guitar - Open G (D2,G2,D3,G3,B3,D4)</option>
+                                <option value="E1,A1,D2,G2">Bass - 4 String (E1,A1,D2,G2)</option>
+                                <option value="B0,E1,A1,D2,G2">Bass - 5 String (B0,E1,A1,D2,G2)</option>
+                                <option value="C3,G3,B3,D4">Banjo - Open G (C3,G3,B3,D4)</option>
+                                <option value="C3,G3,C4,G4,D4">Banjo - Double C (C3,G3,C4,G4,D4)</option>
+                                <option value="C3,G3,C4,D4">Banjo - Standard C (C3,G3,C4,D4)</option>
+                                <option value="D3,A3,D4,F#4">Banjo - Open D (D3,A3,D4,F#4)</option>
+                                <option value="D4,A3,D4,F#4,A4,D5">Mandolin - Standard (D4,A3,D4,F#4,A4,D5)</option>
+                                <option value="D4,G3,B3,E4">Ukulele - Standard (D4,G3,B3,E4)</option>
+                                <option value="G4,C4,E4,A4">Ukulele - Soprano (G4,C4,E4,A4)</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group custom-tuning" id="inputCustomGroup">
+                            <label for="inputTuning">Custom Tuning:</label>
+                            <input type="text" id="inputTuning" name="inputTuning" placeholder="e.g., E2,A2,D3,G3,B3,E4">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="inputFrets">Number of Frets:</label>
+                            <input type="number" id="inputFrets" name="inputFrets" min="0" value="22" required>
+                        </div>
+                    </div>
+
+                    <!-- Output Section -->
+                    <div class="tuning-section">
+                        <h3>📤 Output Instrument</h3>
+                        
+                        <div class="form-group">
+                            <label for="outputPreset">Preset:</label>
+                            <select id="outputPreset" name="outputPreset">
+                                <option value="custom">Custom</option>
+                                <option value="E2,A2,D3,G3,B3,E4">Guitar - Standard (E2,A2,D3,G3,B3,E4)</option>
+                                <option value="D2,A2,D3,G3,B3,E4">Guitar - Drop D (D2,A2,D3,G3,B3,E4)</option>
+                                <option value="C2,G2,C3,F3,A3,D4">Guitar - Drop C (C2,G2,C3,F3,A3,D4)</option>
+                                <option value="D2,A2,D3,G3,B3,D4">Guitar - Open D (D2,A2,D3,G3,B3,D4)</option>
+                                <option value="D2,A2,D3,F#3,A3,D4">Guitar - Open D Minor (D2,A2,D3,F#3,A3,D4)</option>
+                                <option value="E2,A2,E3,A3,C#4,E4">Guitar - Open A (E2,A2,E3,A3,C#4,E4)</option>
+                                <option value="C2,G2,C3,G3,C4,E4">Guitar - Open C (C2,G2,C3,G3,C4,E4)</option>
+                                <option value="D2,G2,D3,G3,B3,D4">Guitar - Open G (D2,G2,D3,G3,B3,D4)</option>
+                                <option value="E1,A1,D2,G2">Bass - 4 String (E1,A1,D2,G2)</option>
+                                <option value="B0,E1,A1,D2,G2">Bass - 5 String (B0,E1,A1,D2,G2)</option>
+                                <option value="C3,G3,B3,D4" selected>Banjo - Open G (C3,G3,B3,D4)</option>
+                                <option value="C3,G3,C4,G4,D4">Banjo - Double C (C3,G3,C4,G4,D4)</option>
+                                <option value="C3,G3,C4,D4">Banjo - Standard C (C3,G3,C4,D4)</option>
+                                <option value="D3,A3,D4,F#4">Banjo - Open D (D3,A3,D4,F#4)</option>
+                                <option value="D4,A3,D4,F#4,A4,D5">Mandolin - Standard (D4,A3,D4,F#4,A4,D5)</option>
+                                <option value="D4,G3,B3,E4">Ukulele - Standard (D4,G3,B3,E4)</option>
+                                <option value="G4,C4,E4,A4">Ukulele - Soprano (G4,C4,E4,A4)</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group custom-tuning" id="outputCustomGroup">
+                            <label for="outputTuning">Custom Tuning:</label>
+                            <input type="text" id="outputTuning" name="outputTuning" placeholder="e.g., C3,G3,B3,D4">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="outputFrets">Number of Frets:</label>
+                            <input type="number" id="outputFrets" name="outputFrets" min="0" value="22" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="fileInput">Select Tab File:</label>
+                    <input type="file" id="fileInput" name="fileInput" accept=".txt,.tab">
+                </div>
+
+                <button type="submit">Convert Tab</button>
+            </form>
+
+            <div id="inputContainer" class="content-container">
+                <div class="content-title">📄 Input Tab Content (Editable):</div>
+                <textarea id="inputContent"></textarea>
+            </div>
+
+            <div id="resultContainer" class="content-container">
+                <div class="content-title">✨ Converted Output:</div>
+                <div id="resultContent" class="content-text"></div>
+                <div class="button-group">
+                    <button type="button" id="convertButton" class="secondary-button">🔄 Convert Tab</button>
+                    <button type="button" id="downloadButton" class="secondary-button">📥 Download Output</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- How to Use Tab -->
+        <div id="howtoTab" class="tab-content">
+            <div class="construction-notice">
+                <h3>🚧 Under Construction</h3>
+                <p>The "How to Use" guide is currently being developed. Check back soon!</p>
+            </div>
+        </div>
+
+        <!-- About Tab -->
+        <div id="aboutTab" class="tab-content">
+            <div class="construction-notice">
+                <h3>🚧 Under Construction</h3>
+                <p>The "About" section is currently being developed. Check back soon!</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="tc.js"></script>
+    <script>
+        let wasmModule = null;
+        let currentOutputContent = '';
+
+        // Modal functions
+        function closeModal() {
+            document.getElementById('constructionModal').classList.remove('show');
+        }
+
+        // Tab switching
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Remove active from all buttons
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Show selected tab
+            document.getElementById(tabName + 'Tab').classList.add('active');
+
+            // Add active to clicked button
+            event.target.classList.add('active');
+        }
+
+        // Tuning presets management
+        const inputPresetSelect = document.getElementById('inputPreset');
+        const outputPresetSelect = document.getElementById('outputPreset');
+        const inputCustomGroup = document.getElementById('inputCustomGroup');
+        const outputCustomGroup = document.getElementById('outputCustomGroup');
+        const inputTuningInput = document.getElementById('inputTuning');
+        const outputTuningInput = document.getElementById('outputTuning');
+
+        inputPresetSelect.addEventListener('change', (e) => {
+            if (e.target.value === 'custom') {
+                inputCustomGroup.classList.add('show');
+                inputTuningInput.required = true;
+            } else {
+                inputCustomGroup.classList.remove('show');
+                inputTuningInput.required = false;
+            }
+        });
+
+        outputPresetSelect.addEventListener('change', (e) => {
+            if (e.target.value === 'custom') {
+                outputCustomGroup.classList.add('show');
+                outputTuningInput.required = true;
+            } else {
+                outputCustomGroup.classList.remove('show');
+                outputTuningInput.required = false;
+            }
+        });
+
+        // Load WASM module
+        async function loadWasm() {
+            try {
+                console.log('Starting WASM load...');
+                console.log('typeof Module:', typeof Module);
+                
+                if (typeof Module === 'function') {
+                    console.log('Calling Module factory...');
+                    wasmModule = await Module();
+                    console.log('WASM module loaded successfully');
+                    console.log('_process_data available:', typeof wasmModule._process_data);
+                } else {
+                    console.error('Module is not a function, typeof:', typeof Module);
+                }
+            } catch (error) {
+                console.error('Failed to load WASM module:', error);
+            }
+        }
+
+        // Read file as text
+        function readFileAsText(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.onerror = (e) => reject(e);
+                reader.readAsText(file);
+            });
+        }
+
+        // Convert tab function
+        async function convertTab() {
+            const inputContainer = document.getElementById('inputContainer');
+            const inputContent = document.getElementById('inputContent');
+            const resultContainer = document.getElementById('resultContainer');
+            const resultContent = document.getElementById('resultContent');
+            const convertButton = document.getElementById('convertButton');
+
+            // Show loading state
+            resultContainer.classList.add('show');
+            resultContent.className = 'content-text loading';
+            resultContent.textContent = 'Processing...';
+            convertButton.disabled = true;
+
+            try {
+                // Get form values
+                const inputPreset = inputPresetSelect.value;
+                const outputPreset = outputPresetSelect.value;
+                
+                const inputTuning = inputPreset === 'custom' ? inputTuningInput.value : inputPreset;
+                const outputTuning = outputPreset === 'custom' ? outputTuningInput.value : outputPreset;
+                
+                const inputFrets = parseInt(document.getElementById('inputFrets').value);
+                const outputFrets = parseInt(document.getElementById('outputFrets').value);
+
+                // Get content from textarea
+                const fileContent = inputContent.value;
+
+                if (!fileContent.trim()) {
+                    throw new Error('Please load a file or enter tab content');
+                }
+
+                console.log('wasmModule:', wasmModule);
+                console.log('_process_data:', wasmModule ? wasmModule._process_data : 'wasmModule is null');
+
+                // Check if WASM module is loaded
+                if (!wasmModule || !wasmModule._process_data) {
+                    resultContent.className = 'content-text error';
+                    resultContent.textContent = 
+                        'WASM module not loaded. Please ensure your WASM file is compiled and available.\n\n' +
+                        'Parameters that would be sent:\n' +
+                        `Input Tuning: ${inputTuning}\n` +
+                        `Output Tuning: ${outputTuning}\n` +
+                        `Input Frets: ${inputFrets}\n` +
+                        `Output Frets: ${outputFrets}\n` +
+                        `File Content Length: ${fileContent.length} characters\n\n` +
+                        'Check the browser console for debug information.';
+                } else {
+                    // Call WASM function
+                    const result = wasmModule.ccall(
+                        'process_data',
+                        'string',
+                        ['string', 'string', 'string', 'number', 'number'],
+                        [fileContent, inputTuning, outputTuning, inputFrets, outputFrets]
+                    );
+
+                    // Display result
+                    if (result.startsWith('Error:')) {
+                        resultContent.className = 'content-text error';
+                    } else {
+                        resultContent.className = 'content-text success';
+                    }
+                    resultContent.textContent = result;
+                    currentOutputContent = result;
+                }
+            } catch (error) {
+                resultContent.className = 'content-text error';
+                resultContent.textContent = `Error: ${error.message}`;
+                console.error('Processing error:', error);
+            } finally {
+                convertButton.disabled = false;
+            }
+        }
+
+        // Download output function
+        function downloadOutput() {
+            if (!currentOutputContent) {
+                alert('No output to download. Please convert a tab first.');
+                return;
+            }
+
+            const blob = new Blob([currentOutputContent], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'converted_tab.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // Process the form submission (load file)
+        document.getElementById('converterForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const inputContainer = document.getElementById('inputContainer');
+            const inputContent = document.getElementById('inputContent');
+            const fileInput = document.getElementById('fileInput');
+
+            try {
+                if (!fileInput.files || fileInput.files.length === 0) {
+                    throw new Error('Please select a file');
+                }
+
+                // Read file content
+                const fileContent = await readFileAsText(fileInput.files[0]);
+
+                // Display input file content in editable textarea
+                inputContainer.classList.add('show');
+                inputContent.value = fileContent;
+
+                // Automatically convert after loading
+                await convertTab();
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+                console.error('File loading error:', error);
+            }
+        });
+
+        // Convert button click
+        document.getElementById('convertButton').addEventListener('click', convertTab);
+
+        // Download button click
+        document.getElementById('downloadButton').addEventListener('click', downloadOutput);
+
+        // Initialize WASM on page load
+        loadWasm();
+    </script>
+</body>
+</html>
