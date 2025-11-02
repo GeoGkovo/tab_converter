@@ -849,8 +849,22 @@
 
         function autoCorrelate(buffer, sampleRate) {
             const bufferSize = buffer.length;
+
+            // Calculate RMS to check if signal is strong enough
+            let rms = 0;
+            for (let i = 0; i < bufferSize; i++) {
+                rms += buffer[i] * buffer[i];
+            }
+            rms = Math.sqrt(rms / bufferSize);
+
+            // Ignore weak signals (noise threshold)
+            if (rms < 0.01) {
+                return -1;
+            }
+
             const yinBuffer = new Float32Array(bufferSize / 2);
 
+            // Step 1: Difference function
             for (let t = 0; t < yinBuffer.length; t++) {
                 let sum = 0;
                 for (let i = 0; i < yinBuffer.length; i++) {
@@ -860,6 +874,7 @@
                 yinBuffer[t] = sum;
             }
 
+            // Step 2: Cumulative mean normalized difference
             let runningSum = 0;
             yinBuffer[0] = 1;
             for (let t = 1; t < yinBuffer.length; t++) {
@@ -867,23 +882,42 @@
                 yinBuffer[t] *= t / runningSum;
             }
 
-            const threshold = 0.1;
-            let minTau = -1;
-            let minVal = Number.POSITIVE_INFINITY;
-            for (let t = 2; t < yinBuffer.length; t++) {
+            // Step 3: Absolute threshold - more strict for better accuracy
+            const threshold = 0.15;
+            let tau = -1;
+
+            // Search within reasonable musical pitch range
+            const minPeriod = Math.floor(sampleRate / 1000); // ~1000 Hz max
+            const maxPeriod = Math.floor(sampleRate / 60);   // ~60 Hz min
+
+            for (let t = minPeriod; t < maxPeriod && t < yinBuffer.length; t++) {
                 if (yinBuffer[t] < threshold) {
+                    // Find the local minimum
                     while (t + 1 < yinBuffer.length && yinBuffer[t + 1] < yinBuffer[t]) {
                         t++;
                     }
-                    return sampleRate / t;
-                } else if (yinBuffer[t] < minVal) {
-                    minVal = yinBuffer[t];
-                    minTau = t;
+                    tau = t;
+                    break;
                 }
             }
 
-            if (minTau !== -1) {
-                const betterPeriod = parabolicInterpolation(yinBuffer, minTau);
+            // If no good threshold found, use best minimum
+            if (tau === -1) {
+                let minVal = Number.POSITIVE_INFINITY;
+                for (let t = minPeriod; t < maxPeriod && t < yinBuffer.length; t++) {
+                    if (yinBuffer[t] < minVal) {
+                        minVal = yinBuffer[t];
+                        tau = t;
+                    }
+                }
+                // Only accept if confidence is reasonable
+                if (minVal > 0.3) {
+                    return -1;
+                }
+            }
+
+            if (tau !== -1) {
+                const betterPeriod = parabolicInterpolation(yinBuffer, tau);
                 return sampleRate / betterPeriod;
             }
 
@@ -940,17 +974,24 @@
         async function startTuning() {
             try {
                 // Check if mediaDevices is available
-                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                    throw new Error('Microphone access requires HTTPS or localhost. Please serve this page over HTTPS.');
+                if (!navigator.mediaDevices) {
+                    throw new Error('navigator.mediaDevices is not available. Check if you are using HTTPS or localhost.');
                 }
 
+                if (!navigator.mediaDevices.getUserMedia) {
+                    throw new Error('getUserMedia is not supported in this browser.');
+                }
+
+                console.log('Requesting microphone access...');
                 tunerStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                console.log('Microphone access granted');
                 tunerAudioContext = new (window.AudioContext || window.webkitAudioContext)();
                 tunerAnalyser = tunerAudioContext.createAnalyser();
-                tunerAnalyser.fftSize = 2048;
+                tunerAnalyser.fftSize = 4096;  // Increased for better low-frequency resolution
+                tunerAnalyser.smoothingTimeConstant = 0.8;  // Smooth out noise
 
                 const source = tunerAudioContext.createMediaStreamSource(tunerStream);
-                tunerScriptProcessor = tunerAudioContext.createScriptProcessor(2048, 1, 1);
+                tunerScriptProcessor = tunerAudioContext.createScriptProcessor(4096, 1, 1);  // Match fftSize
 
                 source.connect(tunerAnalyser);
                 tunerAnalyser.connect(tunerScriptProcessor);
@@ -960,14 +1001,14 @@
                     const buffer = e.inputBuffer.getChannelData(0);
                     const frequency = autoCorrelate(buffer, tunerAudioContext.sampleRate);
 
-                    if (frequency > 0 && frequency < 20000) {
+                    if (frequency > 60 && frequency < 1000) {  // More restrictive range for musical instruments
                         const { note, octave, cents } = frequencyToNote(frequency);
                         document.getElementById('noteDisplay').innerHTML =
                             `${note}<span style="font-size: 36px; vertical-align: super;">${octave}</span>`;
                         document.getElementById('frequencyDisplay').textContent =
                             `${frequency.toFixed(2)} Hz`;
 
-                        const progress = 50 + cents / 2;
+                        const progress = Math.max(0, Math.min(100, 50 + cents / 2));  // Clamp between 0-100
                         document.getElementById('progressFill').style.width = `${progress}%`;
 
                         const tuningText = cents === 0 ? 'In tune' :
@@ -977,7 +1018,7 @@
                             `Frequency: ${frequency.toFixed(2)} Hz`;
                     } else {
                         document.getElementById('tunerDebug').textContent =
-                            'No pitch detected or frequency out of range';
+                            'No clear pitch detected - play a steady note';
                     }
                 };
 
