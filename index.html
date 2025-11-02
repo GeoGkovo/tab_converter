@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -126,13 +127,25 @@
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
         }
 
         @keyframes slideDown {
-            from { transform: translateY(-50px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
         }
 
         /* Tab Navigation */
@@ -384,6 +397,7 @@
         }
     </style>
 </head>
+
 <body>
     <!-- Construction Modal -->
     <div id="constructionModal" class="modal show">
@@ -404,10 +418,10 @@
 
     <div class="container">
         <h1>🎸 Tab Converter</h1>
-        
-        <!-- Tab Navigation -->
+
         <div class="tab-navigation">
             <button class="tab-button active" onclick="switchTab('converter')">Converter</button>
+            <button class="tab-button" onclick="switchTab('tuner')">Tuner</button>
             <button class="tab-button" onclick="switchTab('howto')">How to Use</button>
             <button class="tab-button" onclick="switchTab('about')">About</button>
         </div>
@@ -419,12 +433,13 @@
                     <!-- Input Section -->
                     <div class="tuning-section">
                         <h3>📥 Input Instrument</h3>
-                        
+
                         <div class="form-group">
                             <label for="inputPreset">Preset:</label>
                             <select id="inputPreset" name="inputPreset">
                                 <option value="custom">Custom</option>
-                                <option value="E2,A2,D3,G3,B3,E4" selected>Guitar - Standard (E2,A2,D3,G3,B3,E4)</option>
+                                <option value="E2,A2,D3,G3,B3,E4" selected>Guitar - Standard (E2,A2,D3,G3,B3,E4)
+                                </option>
                                 <option value="D2,A2,D3,G3,B3,E4">Guitar - Drop D (D2,A2,D3,G3,B3,E4)</option>
                                 <option value="C2,G2,C3,F3,A3,D4">Guitar - Drop C (C2,G2,C3,F3,A3,D4)</option>
                                 <option value="D2,A2,D3,G3,B3,D4">Guitar - Open D (D2,A2,D3,G3,B3,D4)</option>
@@ -446,7 +461,8 @@
 
                         <div class="form-group custom-tuning" id="inputCustomGroup">
                             <label for="inputTuning">Custom Tuning:</label>
-                            <input type="text" id="inputTuning" name="inputTuning" placeholder="e.g., E2,A2,D3,G3,B3,E4">
+                            <input type="text" id="inputTuning" name="inputTuning"
+                                placeholder="e.g., E2,A2,D3,G3,B3,E4">
                         </div>
 
                         <div class="form-group">
@@ -458,7 +474,7 @@
                     <!-- Output Section -->
                     <div class="tuning-section">
                         <h3>📤 Output Instrument</h3>
-                        
+
                         <div class="form-group">
                             <label for="outputPreset">Preset:</label>
                             <select id="outputPreset" name="outputPreset">
@@ -515,6 +531,48 @@
                     <button type="button" id="convertButton" class="secondary-button">🔄 Convert Tab</button>
                     <button type="button" id="downloadButton" class="secondary-button">📥 Download Output</button>
                 </div>
+            </div>
+        </div>
+
+        <div id="tunerTab" class="tab-content">
+            <div style="max-width: 600px; margin: 0 auto;">
+                <p style="text-align: center; color: #666; margin-bottom: 25px; font-size: 14px;">
+                    Click "Start" to tune your instrument in real-time
+                </p>
+
+                <canvas id="visualizer"
+                    style="width: 100%; height: 150px; background: #f0f0f0; border-radius: 10px; margin-bottom: 20px;"></canvas>
+
+                <div class="note-display"
+                    style="text-align: center; background: #f8f9fa; padding: 30px; border-radius: 10px; margin-bottom: 20px;">
+                    <div class="note-text" style="font-size: 64px; font-weight: bold; color: #333; line-height: 1;"
+                        id="noteDisplay">-</div>
+                    <div class="frequency" style="font-size: 16px; color: #666; margin-top: 10px;"
+                        id="frequencyDisplay">0.00 Hz</div>
+                </div>
+
+                <div class="tuning-indicator" style="margin-bottom: 20px;">
+                    <div class="progress-bar"
+                        style="width: 100%; height: 8px; background: #e0e0e0; border-radius: 4px; overflow: hidden; position: relative;">
+                        <div class="progress-fill"
+                            style="height: 100%; background: linear-gradient(90deg, #ff4444 0%, #ffaa00 50%, #44ff44 100%); transition: width 0.1s ease; width: 50%;"
+                            id="progressFill"></div>
+                    </div>
+                    <div class="tuning-text"
+                        style="text-align: center; margin-top: 10px; font-size: 14px; color: #666; font-weight: 500;"
+                        id="tuningText">-</div>
+                </div>
+
+                <div class="button-group">
+                    <button type="button" id="startTunerBtn">Start Tuner</button>
+                    <button type="button" id="stopTunerBtn" disabled>Stop Tuner</button>
+                </div>
+
+                <div class="status" style="text-align: center; font-size: 14px; color: #666; margin-top: 15px;"
+                    id="tunerStatus">Status: inactive</div>
+                <div class="debug"
+                    style="text-align: center; font-size: 12px; color: #999; margin-top: 10px; min-height: 18px;"
+                    id="tunerDebug"></div>
             </div>
         </div>
 
@@ -597,7 +655,7 @@
             try {
                 console.log('Starting WASM load...');
                 console.log('typeof Module:', typeof Module);
-                
+
                 if (typeof Module === 'function') {
                     console.log('Calling Module factory...');
                     wasmModule = await Module();
@@ -639,10 +697,10 @@
                 // Get form values
                 const inputPreset = inputPresetSelect.value;
                 const outputPreset = outputPresetSelect.value;
-                
+
                 const inputTuning = inputPreset === 'custom' ? inputTuningInput.value : inputPreset;
                 const outputTuning = outputPreset === 'custom' ? outputTuningInput.value : outputPreset;
-                
+
                 const inputFrets = parseInt(document.getElementById('inputFrets').value);
                 const outputFrets = parseInt(document.getElementById('outputFrets').value);
 
@@ -659,7 +717,7 @@
                 // Check if WASM module is loaded
                 if (!wasmModule || !wasmModule._process_data) {
                     resultContent.className = 'content-text error';
-                    resultContent.textContent = 
+                    resultContent.textContent =
                         'WASM module not loaded. Please ensure your WASM file is compiled and available.\n\n' +
                         'Parameters that would be sent:\n' +
                         `Input Tuning: ${inputTuning}\n` +
@@ -749,6 +807,245 @@
 
         // Initialize WASM on page load
         loadWasm();
+
+        // Tuner functionality
+        const A4 = 440;
+        const C0 = A4 * Math.pow(2, -4.75);
+        const noteNames = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+
+        let tunerAudioContext = null;
+        let tunerAnalyser = null;
+        let tunerScriptProcessor = null;
+        let tunerStream = null;
+        let tunerAnimationId = null;
+        let isTunerRecording = false;
+
+        const tunerCanvas = document.getElementById('visualizer');
+        const tunerCanvasCtx = tunerCanvas ? tunerCanvas.getContext('2d') : null;
+
+        function resizeTunerCanvas() {
+            if (!tunerCanvas) return;
+            tunerCanvas.width = tunerCanvas.offsetWidth * window.devicePixelRatio;
+            tunerCanvas.height = tunerCanvas.offsetHeight * window.devicePixelRatio;
+            tunerCanvasCtx.scale(window.devicePixelRatio, window.devicePixelRatio);
+        }
+
+        // Only resize if canvas exists
+        if (tunerCanvas) {
+            resizeTunerCanvas();
+        }
+
+        function frequencyToNote(frequency) {
+            const halfStepsFromC0 = 12 * Math.log2(frequency / C0);
+            const octave = Math.floor(halfStepsFromC0 / 12);
+            const noteIndex = Math.round(halfStepsFromC0 % 12);
+            const note = noteNames[noteIndex];
+
+            const exactHalfSteps = 12 * Math.log2(frequency / C0);
+            const cents = Math.round((exactHalfSteps - Math.round(halfStepsFromC0)) * 100);
+
+            return { note, octave, cents };
+        }
+
+        function autoCorrelate(buffer, sampleRate) {
+            const bufferSize = buffer.length;
+            const yinBuffer = new Float32Array(bufferSize / 2);
+
+            for (let t = 0; t < yinBuffer.length; t++) {
+                let sum = 0;
+                for (let i = 0; i < yinBuffer.length; i++) {
+                    const diff = buffer[i] - buffer[i + t];
+                    sum += diff * diff;
+                }
+                yinBuffer[t] = sum;
+            }
+
+            let runningSum = 0;
+            yinBuffer[0] = 1;
+            for (let t = 1; t < yinBuffer.length; t++) {
+                runningSum += yinBuffer[t];
+                yinBuffer[t] *= t / runningSum;
+            }
+
+            const threshold = 0.1;
+            let minTau = -1;
+            let minVal = Number.POSITIVE_INFINITY;
+            for (let t = 2; t < yinBuffer.length; t++) {
+                if (yinBuffer[t] < threshold) {
+                    while (t + 1 < yinBuffer.length && yinBuffer[t + 1] < yinBuffer[t]) {
+                        t++;
+                    }
+                    return sampleRate / t;
+                } else if (yinBuffer[t] < minVal) {
+                    minVal = yinBuffer[t];
+                    minTau = t;
+                }
+            }
+
+            if (minTau !== -1) {
+                const betterPeriod = parabolicInterpolation(yinBuffer, minTau);
+                return sampleRate / betterPeriod;
+            }
+
+            return -1;
+        }
+
+        function parabolicInterpolation(array, tau) {
+            if (tau < 1 || tau > array.length - 1) return tau;
+            const betterTau = (array[tau - 1] - array[tau + 1]) /
+                (2 * (array[tau - 1] - 2 * array[tau] + array[tau + 1])) + tau;
+            return betterTau;
+        }
+
+        function visualizeTuner() {
+            if (!tunerAnalyser || !tunerCanvasCtx) return;
+
+            const bufferLength = tunerAnalyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+            tunerAnalyser.getByteTimeDomainData(dataArray);
+
+            const width = tunerCanvas.offsetWidth;
+            const height = tunerCanvas.offsetHeight;
+
+            tunerCanvasCtx.fillStyle = 'rgb(240, 240, 240)';
+            tunerCanvasCtx.fillRect(0, 0, width, height);
+            tunerCanvasCtx.lineWidth = 2;
+            tunerCanvasCtx.strokeStyle = 'rgb(102, 126, 234)';
+            tunerCanvasCtx.beginPath();
+
+            const sliceWidth = width / bufferLength;
+            let x = 0;
+
+            for (let i = 0; i < bufferLength; i++) {
+                const v = dataArray[i] / 128.0;
+                const y = v * height / 2;
+
+                if (i === 0) {
+                    tunerCanvasCtx.moveTo(x, y);
+                } else {
+                    tunerCanvasCtx.lineTo(x, y);
+                }
+
+                x += sliceWidth;
+            }
+
+            tunerCanvasCtx.lineTo(width, height / 2);
+            tunerCanvasCtx.stroke();
+
+            if (isTunerRecording) {
+                tunerAnimationId = requestAnimationFrame(visualizeTuner);
+            }
+        }
+
+        async function startTuning() {
+            try {
+                // Check if mediaDevices is available
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    throw new Error('Microphone access requires HTTPS or localhost. Please serve this page over HTTPS.');
+                }
+
+                tunerStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                tunerAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+                tunerAnalyser = tunerAudioContext.createAnalyser();
+                tunerAnalyser.fftSize = 2048;
+
+                const source = tunerAudioContext.createMediaStreamSource(tunerStream);
+                tunerScriptProcessor = tunerAudioContext.createScriptProcessor(2048, 1, 1);
+
+                source.connect(tunerAnalyser);
+                tunerAnalyser.connect(tunerScriptProcessor);
+                tunerScriptProcessor.connect(tunerAudioContext.destination);
+
+                tunerScriptProcessor.onaudioprocess = (e) => {
+                    const buffer = e.inputBuffer.getChannelData(0);
+                    const frequency = autoCorrelate(buffer, tunerAudioContext.sampleRate);
+
+                    if (frequency > 0 && frequency < 20000) {
+                        const { note, octave, cents } = frequencyToNote(frequency);
+                        document.getElementById('noteDisplay').innerHTML =
+                            `${note}<span style="font-size: 36px; vertical-align: super;">${octave}</span>`;
+                        document.getElementById('frequencyDisplay').textContent =
+                            `${frequency.toFixed(2)} Hz`;
+
+                        const progress = 50 + cents / 2;
+                        document.getElementById('progressFill').style.width = `${progress}%`;
+
+                        const tuningText = cents === 0 ? 'In tune' :
+                            cents > 0 ? `${cents} cents sharp` : `${Math.abs(cents)} cents flat`;
+                        document.getElementById('tuningText').textContent = tuningText;
+                        document.getElementById('tunerDebug').textContent =
+                            `Frequency: ${frequency.toFixed(2)} Hz`;
+                    } else {
+                        document.getElementById('tunerDebug').textContent =
+                            'No pitch detected or frequency out of range';
+                    }
+                };
+
+                isTunerRecording = true;
+                visualizeTuner();
+
+                document.getElementById('startTunerBtn').disabled = true;
+                document.getElementById('stopTunerBtn').disabled = false;
+                document.getElementById('tunerStatus').textContent = 'Status: recording';
+            } catch (error) {
+                console.error('Error accessing microphone:', error);
+                document.getElementById('tunerDebug').textContent = `Error: ${error.message}`;
+                alert('Error: ' + error.message);
+            }
+        }
+
+        function stopTuning() {
+            isTunerRecording = false;
+
+            if (tunerAnimationId) {
+                cancelAnimationFrame(tunerAnimationId);
+            }
+            if (tunerScriptProcessor) {
+                tunerScriptProcessor.disconnect();
+            }
+            if (tunerAnalyser) {
+                tunerAnalyser.disconnect();
+            }
+            if (tunerAudioContext) {
+                tunerAudioContext.close();
+            }
+            if (tunerStream) {
+                tunerStream.getTracks().forEach(track => track.stop());
+            }
+
+            document.getElementById('noteDisplay').innerHTML = '-';
+            document.getElementById('frequencyDisplay').textContent = '0.00 Hz';
+            document.getElementById('progressFill').style.width = '50%';
+            document.getElementById('tuningText').textContent = '-';
+            document.getElementById('tunerDebug').textContent = '';
+
+            if (tunerCanvasCtx) {
+                tunerCanvasCtx.fillStyle = 'rgb(240, 240, 240)';
+                tunerCanvasCtx.fillRect(0, 0, tunerCanvas.offsetWidth, tunerCanvas.offsetHeight);
+            }
+
+            document.getElementById('startTunerBtn').disabled = false;
+            document.getElementById('stopTunerBtn').disabled = true;
+            document.getElementById('tunerStatus').textContent = 'Status: inactive';
+        }
+
+        // Add event listeners only if buttons exist
+        const startTunerBtn = document.getElementById('startTunerBtn');
+        const stopTunerBtn = document.getElementById('stopTunerBtn');
+
+        if (startTunerBtn) {
+            startTunerBtn.addEventListener('click', startTuning);
+        }
+        if (stopTunerBtn) {
+            stopTunerBtn.addEventListener('click', stopTuning);
+        }
+
+        window.addEventListener('beforeunload', () => {
+            if (isTunerRecording) {
+                stopTuning();
+            }
+        });
     </script>
 </body>
+
 </html>
